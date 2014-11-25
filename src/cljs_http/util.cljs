@@ -1,6 +1,7 @@
 (ns cljs-http.util
   (:import goog.Uri)
   (:require [clojure.string :refer [blank? capitalize join split lower-case]]
+            [cognitect.transit :as t]
             [goog.userAgent :as agent]
             [no.en.core :refer [base64-encode]]))
 
@@ -44,10 +45,22 @@
   "Returns true if the user agent is an Android client."
   [] (re-matches #"(?i).*android.*" (user-agent)))
 
+(defn transit-decode
+  "Transit decode an object from `s`."
+  [s type opts]
+  (let [rdr (t/reader type opts)]
+    (t/read rdr s)))
+
+(defn transit-encode
+  "Transit encode `x` into a String."
+  [x type opts]
+  (let [wrtr (t/writer type opts)]
+    (t/write wrtr x)))
+
 (defn json-decode
   "JSON decode an object from `s`."
   [s]
-  (if-let [v (js/JSON.parse s)]
+  (if-let [v (if-not (clojure.string/blank? s) (js/JSON.parse s))]
     (js->clj v :keywordize-keys true)))
 
 (defn json-encode
